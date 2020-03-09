@@ -109,7 +109,7 @@ def rebase_merge_requests(dry_run, gl, rebase_limit):
                 logging.error('unable to rebase {}: {}'.format(mr.iid, e))
 
 
-def merge_merge_requests(dry_run, gl, merge_limit):
+def merge_merge_requests(dry_run, gl, merge_limit, enable_rebase):
     MERGE_LABELS = ['lgtm', 'automerge', 'approved']
 
     mrs = gl.get_merge_requests(state='opened')
@@ -123,7 +123,10 @@ def merge_merge_requests(dry_run, gl, merge_limit):
         target_branch = mr.target_branch
         head = gl.project.commits.list(ref_name=target_branch)[0].id
         result = gl.project.repository_compare(mr.sha, head)
-        if len(result['commits']) != 0:  # not rebased
+
+        # Do not merge if auto-rebase is enabled and the MR is not
+        # rebased.
+        if enable_rebase and len(result['commits']) != 0:  # not rebased
             continue
 
         labels = mr.attributes.get('labels')
@@ -165,6 +168,6 @@ def run(gitlab_project_id, dry_run=False, days_interval=15,
                        'issue')
     handle_stale_items(dry_run, gl, days_interval, enable_closing,
                        'merge-request')
-    merge_merge_requests(dry_run, gl, limit)
+    merge_merge_requests(dry_run, gl, limit, enable_rebase)
     if enable_rebase:
         rebase_merge_requests(dry_run, gl, limit)
