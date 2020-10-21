@@ -50,8 +50,8 @@ class OC(object):
     def __init__(self, server, token, jh=None, settings=None,
                  init_projects=False, init_api_resources=False):
         self.server = server
-        oc_base_cmd = [
-            'oc',
+        oc_base_cmd = ['oc']
+        self.oc_cmd_creds = [
             '--kubeconfig', '/dev/null',
             '--server', server,
             '--token', token
@@ -386,7 +386,7 @@ class OC(object):
         return False
 
     @retry(exceptions=(StatusCodeError, NoOutputError), max_attempts=10)
-    def _run(self, cmd, **kwargs):
+    def _run(self, full_cmd, **kwargs):
         if kwargs.get('stdin'):
             stdin = PIPE
             stdin_text = kwargs.get('stdin').encode()
@@ -395,7 +395,7 @@ class OC(object):
             stdin_text = None
 
         p = Popen(
-            self.oc_base_cmd + cmd,
+            full_cmd,
             stdin=stdin,
             stdout=PIPE,
             stderr=PIPE
@@ -422,7 +422,8 @@ class OC(object):
         return out.strip()
 
     def _run_json(self, cmd, allow_not_found=False):
-        out = self._run(cmd, allow_not_found=allow_not_found)
+        full_cmd = self.oc_base_cmd + self.oc_cmd_creds + cmd
+        out = self._run(full_cmd, allow_not_found=allow_not_found)
 
         try:
             out_json = json.loads(out)

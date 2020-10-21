@@ -82,6 +82,7 @@ import reconcile.sql_query
 import reconcile.user_validator
 import reconcile.integrations_validator
 import reconcile.dashdotdb_cso
+import reconcile.ocp_release_ecr_mirror
 
 from reconcile.status import ExitCodes
 
@@ -854,6 +855,12 @@ def gcr_mirror(ctx):
 @binary(['skopeo'])
 def quay_mirror(ctx):
     run_integration(reconcile.quay_mirror, ctx.obj)
+
+
+@integration.command()
+@click.pass_context
+def ocp_release_ecr_mirror(ctx):
+    run_integration(reconcile.ocp_release_ecr_mirror, ctx.obj)
 
 
 @integration.command()
